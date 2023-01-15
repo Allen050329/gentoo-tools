@@ -1,0 +1,59 @@
+#!/bin/bash
+set -e
+cd /usr/share/updater/
+
+VALID_ARGS=$(getopt -o k,s,h,u: --long kernel,sync,help,update: -- "$@")
+if [[ $? -ne 0 ]]; then
+	echo "Usage:"
+	echo "-k,--kernel	rebuild current kernel"
+        echo "-u,--update [input]	update, input 'y' for basic invocation, 'A' for all, 'B' if your system is borked"
+        echo "-s,--sync		does 'emaint sync -A' beforehand"
+        echo "-h,--help		this help output"
+	exit 1;
+fi
+
+F_NAME=""
+
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    -k | --kernel)
+        echo "Building kernel ..."
+	./build_kernel.sh
+        shift
+        ;;
+    -s | --sync)
+        echo "Syncing ..."
+        emerge-webrsync && emaint sync -A && emerge --regen -q
+        shift
+        ;;
+    -h | --help)
+        echo "Usage:"
+	    echo "-k,--kernel       	rebuild current kernel"
+        echo "-u,--update [input]	update, input 'y' for basic invocation, 'A' for all, 'B' if your system is borked"
+        echo "-s,--sync		does 'emaint sync -A' beforehand"
+        echo "-h,--help		this help output"
+	exit 0
+	shift
+	;;
+    --)
+	shift;
+	break
+	;;
+    *)
+	echo "Unexpected option: $1"
+	echo "Usage:"
+        echo "-k,--kernel       rebuild current kernel"
+	    echo "-u,--update [input]	update, input 'y' for basic invocation, 'A' for all, 'B' if your system is borked"
+        echo "-s,--sync		does 'emaint sync -A' beforehand"
+        echo "-h,--help		this help output"
+	exit 1
+	;;
+    esac
+done
+
+if [[ $F_NAME != "" ]]; then
+	echo "Running $F_NAME ..."
+	. "./$F_NAME"
+fi
+exit 0

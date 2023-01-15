@@ -1,0 +1,21 @@
+#!/bin/bash
+./update
+while :; do
+    eselect kernel list > ./kernel_list.txt
+    eselect kernel list
+    check='^[+-]?[0-9]+([.][0-9]+)?$'
+    read -p "Input kernel selection:" kernelchoice
+    if [[ $kernelchoice =~ $check ]]; then
+        if [[ $kernelchoice < $((10#`cat ./kernel_list.txt | wc -l`)) && $kernelchoice > 0 ]]; then
+            break
+        else
+            echo "Invalid Choice!!!" & continue
+        fi
+    else
+        echo "Invalid Choice!!!" & continue
+    fi
+done
+set -e
+eselect kernel set $kernelchoice
+./build_kernel.sh
+emerge --depclean
