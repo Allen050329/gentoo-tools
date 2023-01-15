@@ -1,2 +1,2 @@
-# gentooo-tools
+# gentoo-tools
 my Gentoo tools
