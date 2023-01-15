@@ -1,0 +1,110 @@
+#!/bin/bash
+set -e
+
+DEFCONFIG=false
+INITRAMFS=true
+DO_MENUCONFIG=false
+USE_CUSTOM_KERNEL_SCRIPT=false
+USE_CUSTOM_BOOTLOADER_SCRIPT=false
+JOBS=$(nproc)
+
+VALID_ARGS=$(getopt -o K,N,m,D,i,j: -- "$@")
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+  case "$1" in
+    -K)
+        if [ -f "./ckb.sh" ]; then
+            USE_CUSTOM_KERNEL_SCRIPT=true
+        else
+            echo "Error: /usr/share/updater/ckb.sh not found!"
+            exit 1
+        fi
+        shift
+        ;;
+    -N)
+        if [ -f "./bootloader.sh" ]; then
+            USE_CUSTOM_BOOTLOADER_SCRIPT=true
+        else
+            echo "Error: /usr/share/updater/bootloader.sh not found!"
+            exit 1
+        fi
+        shift
+        ;;
+    -m)
+        DO_MENUCONFIG=true
+        shift
+        ;;
+    -D)
+        DEFCONFIG=true
+        shift
+        ;;
+    -i)
+        INITRAMFS=false
+        shift
+        ;;
+    -j)
+        JOBS=$2
+        shift
+        ;;
+    *)
+	    echo "Unexpected option: $1"
+	    exit 1
+	;;
+    esac
+done
+
+while :; do
+    eselect kernel list | tee "./kernel_list.txt"
+    check='^[+-]?[0-9]+([.][0-9]+)?$'
+    read -p "Input kernel selection:" kernelchoice
+    if [[ $kernelchoice =~ $check ]]; then
+        if [[ $kernelchoice < $((10#`cat ./kernel_list.txt | wc -l`)) && $kernelchoice > 0 ]]; then
+            break
+        else
+            echo "Invalid Choice!!!"
+            continue
+        fi
+    else
+        echo "Invalid Choice!!!"
+        continue
+    fi
+done
+
+eselect kernel set $kernelchoice
+
+pushd /usr/share/updater
+if [ "$USE_CUSTOM_KERNEL_SCRIPT" = true ]; then
+    echo "Running custom kernel build script"
+    ./ckb.sh
+else
+    pushd /usr/src/linux
+    if [ "$DEFCONFIG" = true ]; then
+        make defconfig
+    else
+        make olddefconfig
+    fi
+
+    if [ "$DO_MENUCONFIG" = true ]; then
+        make menuconfig
+    fi
+
+    make -j$JOBS modules_prepare
+    make -j$JOBS prepare
+    make -j$JOBS
+    make modules_install
+    make install
+    popd
+    emerge @module-rebuild
+    emerge --depclean
+fi
+
+if [ "$INITRAMFS" = true ]; then
+    dracut -Hf --regenerate-all
+fi
+
+if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = false ]; then
+    grub-mkconfig -o /boot/grub/grub.cfg
+else
+    ./bootloader.sh
+fi
+popd
