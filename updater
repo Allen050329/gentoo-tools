@@ -99,7 +99,6 @@ while [ : ]; do
         -h | --help)
             show_help
             exit 0
-            shift
             ;;
         --)
             shift;

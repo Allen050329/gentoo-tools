@@ -46,6 +46,10 @@ while [ : ]; do
         JOBS=$2
         shift
         ;;
+    --)
+        shift;
+        break
+        ;;
     *)
 	    echo "Unexpected option: $1"
 	    exit 1
