@@ -132,7 +132,7 @@ if [ "$UPDATE_ARGS" = true ]; then
 fi
 
 if [ ! -z "$REMAINING_ARGS" ]; then
-    REMAINING_ARGS=true
+    BUILD_REST=true
 fi
 
 if [ "$BUILD_REST" = true ]; then
