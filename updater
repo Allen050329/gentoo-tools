@@ -92,7 +92,8 @@ while [ : ]; do
             shift
             ;;
         -j | --jobs)
-            JOBS=$2
+            shift
+            JOBS=$1
             REMAINING_ARGS+="-j $JOBS "
             shift
             ;;

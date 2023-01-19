@@ -43,7 +43,8 @@ while [ : ]; do
         shift
         ;;
     -j)
-        JOBS=$2
+        shift
+        JOBS=$1
         shift
         ;;
     --)
