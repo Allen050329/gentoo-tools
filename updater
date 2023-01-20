@@ -41,7 +41,8 @@ elif ("$*" | grep -q -e "help") || ("$*" | grep -q -e "$*" "h"); then
     show_help
     exit 0;
 elif "$*" | grep -q -e "addrepo"; then
-    /usr/share/updater/$@
+    ADD_REPO_ARGS=$($* | sed "-"{k,s,u,U,b,B,K,N,m,D,i} | sed "--"{kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building})
+    /usr/share/updater/addrepo $ADD_REPO_ARGS
     exit 0;
 else
     eval set -- "$VALID_ARGS"
