@@ -1,9 +1,7 @@
 #!/bin/bash
 set -e
 
-JOBS=$(nproc)
-VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,jobs: -- "$@")
-REMAINING_ARGS=""
+VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,a,h,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo,help,jobs: -- "$@")
 UPDATE_ARGS=false
 UPDATE_BORKED=false
 SYNC=false
@@ -12,9 +10,8 @@ BUILD_REST=false
 show_help() {
     echo "Usage:"
     echo ""
-    echo "update help; update h		show this help message"
-    echo ""
     echo "update [options]"
+    echo "-h,--help				show this help message"
     echo "-u				update @world"
     echo "-U				update @world and the kernel"
     echo "-b				update @world with --emptytree"
@@ -28,7 +25,7 @@ show_help() {
     echo "-D,--defconfig			call make defconfig instead of make olddefconfig"
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
     echo ""
-    echo "update addrepo [options] <repo-name> <repo-url>"
+    echo "update --addrepo [options] <repo-name> <repo-url>"
     echo "-S,--sync-type (sync type)	how to sync, defaults to git"
     echo "<repo-name>			name of repo locally"
     echo "<repo-url>			link to repo"
@@ -37,88 +34,91 @@ show_help() {
 if [[ $? -ne 0 ]]; then
     show_help
 	exit 1;
-elif ("$*" | grep -q -e "help") || ("$*" | grep -q -e "h"); then
-    show_help
-    exit 0;
-elif ("$*" | grep -q -e "addrepo"); then
-    ADD_REPO_ARGS=$($* | sed "-"{k,s,u,U,b,B,K,N,m,D,i} | sed "--"{kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building})
-    /usr/share/updater/addrepo $ADD_REPO_ARGS
-    exit 0;
 else
     eval set -- "$VALID_ARGS"
     while [ : ]; do
-        case "$1" in
-            -u)
-                UPDATE_ARGS=true
-                shift
-                ;;
-            -U)
-                UPDATE_ARGS=true
-                BUILD_REST=true
-                shift
-                ;;
-            -b)
-                UPDATE_BORKED=true
-                shift
-                ;;
-            -B)
-                UPDATE_BORKED=true
-                BUILD_REST=true
-                shift
-                ;;
-            -s | --sync)
-                SYNC=true
-                shift
-                ;;
-            -k | --kernel)
-                BUILD_REST=true
-                shift
-                ;;
-            -K | --custom-kernel-building)
-                if [ -f "/usr/share/updater/ckb.sh" ]; then
-                    REMAINING_ARGS+="-K "
-                else
-                    echo "Error: /usr/share/updater/ckb.sh not found!"
+        if ("$*" | grep -q -e "--help") || ("$*" | grep -q -e "-h"); then
+            show_help
+            exit 0;
+        elif ("$*" | grep -q -e "--addrepo") || ("$*" | grep -q -e "-a"); then
+            ADD_REPO_ARGS=$($* | sed "-"{k,s,u,U,b,B,K,N,m,D,i,i} | sed "--"{kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo})
+            /usr/share/updater/addrepo $ADD_REPO_ARGS
+            exit 0;
+        else
+            case "$1" in
+                -u)
+                    UPDATE_ARGS=true
+                    shift
+                    ;;
+                -U)
+                    UPDATE_ARGS=true
+                    BUILD_REST=true
+                    shift
+                    ;;
+                -b)
+                    UPDATE_BORKED=true
+                    shift
+                    ;;
+                -B)
+                    UPDATE_BORKED=true
+                    BUILD_REST=true
+                    shift
+                    ;;
+                -s | --sync)
+                    SYNC=true
+                    shift
+                    ;;
+                -k | --kernel)
+                    BUILD_REST=true
+                    shift
+                    ;;
+                -K | --custom-kernel-building)
+                    if [ -f "/usr/share/updater/ckb.sh" ]; then
+                        REMAINING_ARGS+="-K "
+                    else
+                        echo "Error: /usr/share/updater/ckb.sh not found!"
+                        exit 1;
+                    fi
+                    shift
+                    ;;
+                -N | --no-GRUB)
+                    if [ -f "/usr/share/updater/bootloader.sh" ]; then
+                        REMAINING_ARGS+="-N "
+                    else
+                        echo "Error: /usr/share/updater/bootloader.sh not found!"
+                        exit 1;
+                    fi
+                    shift
+                    ;;
+                -m | --menuconfig)
+                    REMAINING_ARGS+="-m "
+                    shift
+                    ;;
+                -D | --defconfig)
+                    REMAINING_ARGS+="-D "
+                    shift
+                    ;;
+                -i | --no-initramfs)
+                    REMAINING_ARGS+="-i "
+                    shift
+                    ;;
+                -j | --jobs)
+                    shift
+                    JOBS=$(nproc)
+                    JOBS=$1
+                    REMAINING_ARGS+="-j $JOBS "
+                    shift
+                    ;;
+                --)
+                    shift;
+                    break
+                    ;;
+                *)
+                    echo "Invalid argument: $1"
+                    show_help
                     exit 1;
-                fi
-                shift
-                ;;
-            -N | --no-GRUB)
-                if [ -f "/usr/share/updater/bootloader.sh" ]; then
-                    REMAINING_ARGS+="-N "
-                else
-                    echo "Error: /usr/share/updater/bootloader.sh not found!"
-                    exit 1;
-                fi
-                shift
-                ;;
-            -m | --menuconfig)
-                REMAINING_ARGS+="-m "
-                shift
-                ;;
-            -D | --defconfig)
-                REMAINING_ARGS+="-D "
-                shift
-                ;;
-            -i | --no-initramfs)
-                REMAINING_ARGS+="-i "
-                shift
-                ;;
-            -j | --jobs)
-                shift
-                JOBS=$1
-                REMAINING_ARGS+="-j $JOBS "
-                shift
-                ;;
-            --)
-                shift;
-                break
-                ;;
-            *)
-                echo "Invalid argument: $1"
-                show_help
-                exit 1;
-        esac
+            esac
+        fi
     done
 fi
 
