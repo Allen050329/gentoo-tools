@@ -2,7 +2,7 @@
 set -e
 
 JOBS=$(nproc)
-VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,jobs: -- "$@")
+VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,jobs: -- "$@")
 REMAINING_ARGS=""
 UPDATE_ARGS=false
 UPDATE_BORKED=false
@@ -11,124 +11,133 @@ BUILD_REST=false
 
 show_help() {
     echo "Usage:"
+    echo ""
+    echo "update help; update h		show this help message"
+    echo ""
+    echo "update [options]"
     echo "-u				update @world"
     echo "-U				update @world and the kernel"
     echo "-b				update @world with --emptytree"
     echo "-B				update @world with --emptytree and update the kernel"
     echo "-j,--jobs			override kernel build job count (Default is $(nproc))"
-    echo "-h,--help			show this help message"
-    echo "-k,--kernel			rebuild the current kernel"
     echo "-s,--sync			sync portage before updating"
+    echo "-k,--kernel			rebuild the current kernel"
     echo "-N,--no-GRUB			call bootloader.sh instead of grub-mkconfig"
-    echo "-i,--no-initramfs		do not call dracut after building the kernel"
     echo "-m,--menuconfig			call make menuconfig before building the kernel"
+    echo "-i,--no-initramfs		do not call dracut after building the kernel"
     echo "-D,--defconfig			call make defconfig instead of make olddefconfig"
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
+    echo ""
+    echo "update addrepo [options] <repo-name> <repo-url>"
+    echo "-S,--sync-type (sync type)	how to sync, defaults to git"
+    echo "<repo-name>			name of repo locally"
+    echo "<repo-url>			link to repo"
 }
 
 if [[ $? -ne 0 ]]; then
     show_help
 	exit 1;
+elif ("$*" | grep -q -e "help") || ("$*" | grep -q -e "$*" "h"); then
+    show_help
+    exit 0;
+elif "$*" | grep -q -e "addrepo"; then
+    /usr/share/updater/$@
+    exit 0;
+else
+    eval set -- "$VALID_ARGS"
+    while [ : ]; do
+        case "$1" in
+            -u)
+                UPDATE_ARGS=true
+                shift
+                ;;
+            -U)
+                UPDATE_ARGS=true
+                BUILD_REST=true
+                shift
+                ;;
+            -b)
+                UPDATE_BORKED=true
+                shift
+                ;;
+            -B)
+                UPDATE_BORKED=true
+                BUILD_REST=true
+                shift
+                ;;
+            -s | --sync)
+                SYNC=true
+                shift
+                ;;
+            -k | --kernel)
+                BUILD_REST=true
+                shift
+                ;;
+            -K | --custom-kernel-building)
+                if [ -f "/usr/share/updater/ckb.sh" ]; then
+                    REMAINING_ARGS+="-K "
+                else
+                    echo "Error: /usr/share/updater/ckb.sh not found!"
+                    exit 1;
+                fi
+                shift
+                ;;
+            -N | --no-GRUB)
+                if [ -f "/usr/share/updater/bootloader.sh" ]; then
+                    REMAINING_ARGS+="-N "
+                else
+                    echo "Error: /usr/share/updater/bootloader.sh not found!"
+                    exit 1;
+                fi
+                shift
+                ;;
+            -m | --menuconfig)
+                REMAINING_ARGS+="-m "
+                shift
+                ;;
+            -D | --defconfig)
+                REMAINING_ARGS+="-D "
+                shift
+                ;;
+            -i | --no-initramfs)
+                REMAINING_ARGS+="-i "
+                shift
+                ;;
+            -j | --jobs)
+                shift
+                JOBS=$1
+                REMAINING_ARGS+="-j $JOBS "
+                shift
+                ;;
+            --)
+                shift;
+                break
+                ;;
+            *)
+                echo "Invalid argument: $1"
+                show_help
+                exit 1;
+        esac
+    done
 fi
-
-eval set -- "$VALID_ARGS"
-
-while [ : ]; do
-    case "$1" in
-        -u)
-            UPDATE_ARGS=true
-            shift
-            ;;
-        -U)
-            UPDATE_ARGS=true
-            BUILD_REST=true
-            shift
-            ;;
-        -b)
-            UPDATE_BORKED=true
-            shift
-            ;;
-        -B)
-            UPDATE_BORKED=true
-            BUILD_REST=true
-            shift
-            ;;
-        -s | --sync)
-            SYNC=true
-            shift
-            ;;
-        -k | --kernel)
-            BUILD_REST=true
-            shift
-            ;;
-        -K | --custom-kernel-building)
-            if [ -f "./ckb.sh" ]; then
-                REMAINING_ARGS+="-K "
-            else
-                echo "Error: /usr/share/updater/ckb.sh not found!"
-                exit 1
-            fi
-            shift
-            ;;
-        -N | --no-GRUB)
-            if [ -f "./bootloader.sh" ]; then
-                REMAINING_ARGS+="-N "
-            else
-                echo "Error: /usr/share/updater/bootloader.sh not found!"
-                exit 1
-            fi
-            shift
-            ;;
-        -m | --menuconfig)
-            REMAINING_ARGS+="-m "
-            shift
-            ;;
-        -D | --defconfig)
-            REMAINING_ARGS+="-D "
-            shift
-            ;;
-        -i | --no-initramfs)
-            REMAINING_ARGS+="-i "
-            shift
-            ;;
-        -j | --jobs)
-            shift
-            JOBS=$1
-            REMAINING_ARGS+="-j $JOBS "
-            shift
-            ;;
-        -h | --help)
-            show_help
-            exit 0
-            ;;
-        --)
-            shift;
-            break
-            ;;
-        *)
-            echo "Invalid argument: $1"
-            show_help
-            exit 1
-            ;;
-    esac
-done
 
 pushd /usr/share/updater
 
 if [ "$SYNC" = true ]; then
     echo "Syncing..."
     # emerge-webrsync
+    # Uncomment above if using rsync for repo
     emaint sync -A
     emerge --regen -q
 fi
 
 if [ "$UPDATE_BORKED" = true ]; then
     UPDATE_ARGS=false
-    ./update_whilst_borked
+    /usr/share/updater/update_whilst_borked
 fi
 
 if [ "$UPDATE_ARGS" = true ]; then
-    ./update
+    /usr/share/updater/update
 fi
 
 if [ ! -z "$REMAINING_ARGS" ]; then
@@ -137,7 +146,6 @@ fi
 
 if [ "$BUILD_REST" = true ]; then
     echo "Calling /usr/share/updater/build_rest..."
-    ./build_rest $REMAINING_ARGS
+    /usr/share/updater/build_rest $REMAINING_ARGS
 fi
-
 popd
