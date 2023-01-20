@@ -37,10 +37,10 @@ show_help() {
 if [[ $? -ne 0 ]]; then
     show_help
 	exit 1;
-elif ("$*" | grep -q -e "help") || ("$*" | grep -q -e "$*" "h"); then
+elif ("$*" | grep -q -e "help") || ("$*" | grep -q -e "h"); then
     show_help
     exit 0;
-elif "$*" | grep -q -e "addrepo"; then
+elif ("$*" | grep -q -e "addrepo"); then
     ADD_REPO_ARGS=$($* | sed "-"{k,s,u,U,b,B,K,N,m,D,i} | sed "--"{kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building})
     /usr/share/updater/addrepo $ADD_REPO_ARGS
     exit 0;
