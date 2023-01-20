@@ -25,7 +25,7 @@ show_help() {
     echo "-D,--defconfig			call make defconfig instead of make olddefconfig"
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
     echo ""
-    echo "update --addrepo [options] <repo-name> <repo-url>"
+    echo "-a,--addrepo [options] <repo-name> <repo-url>:"
     echo "-S,--sync-type (sync type)	how to sync, defaults to git"
     echo "<repo-name>			name of repo locally"
     echo "<repo-url>			link to repo"
@@ -37,92 +37,99 @@ if [[ $? -ne 0 ]]; then
 else
     eval set -- "$VALID_ARGS"
     while [ : ]; do
-        if ("$*" | grep -q -e "--help") || ("$*" | grep -q -e "-h"); then
-            show_help
-            exit 0;
-        elif ("$*" | grep -q -e "--addrepo") || ("$*" | grep -q -e "-a"); then
-            ADD_REPO_ARGS=$($* | sed "-"{k,s,u,U,b,B,K,N,m,D,i,i} | sed "--"{kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo})
-            /usr/share/updater/addrepo $ADD_REPO_ARGS
-            exit 0;
-        else
-            case "$1" in
-                -u)
-                    UPDATE_ARGS=true
-                    shift
-                    ;;
-                -U)
-                    UPDATE_ARGS=true
-                    BUILD_REST=true
-                    shift
-                    ;;
-                -b)
-                    UPDATE_BORKED=true
-                    shift
-                    ;;
-                -B)
-                    UPDATE_BORKED=true
-                    BUILD_REST=true
-                    shift
-                    ;;
-                -s | --sync)
-                    SYNC=true
-                    shift
-                    ;;
-                -k | --kernel)
-                    BUILD_REST=true
-                    shift
-                    ;;
-                -K | --custom-kernel-building)
-                    if [ -f "/usr/share/updater/ckb.sh" ]; then
-                        REMAINING_ARGS+="-K "
-                    else
-                        echo "Error: /usr/share/updater/ckb.sh not found!"
-                        exit 1;
-                    fi
-                    shift
-                    ;;
-                -N | --no-GRUB)
-                    if [ -f "/usr/share/updater/bootloader.sh" ]; then
-                        REMAINING_ARGS+="-N "
-                    else
-                        echo "Error: /usr/share/updater/bootloader.sh not found!"
-                        exit 1;
-                    fi
-                    shift
-                    ;;
-                -m | --menuconfig)
-                    REMAINING_ARGS+="-m "
-                    shift
-                    ;;
-                -D | --defconfig)
-                    REMAINING_ARGS+="-D "
-                    shift
-                    ;;
-                -i | --no-initramfs)
-                    REMAINING_ARGS+="-i "
-                    shift
-                    ;;
-                -j | --jobs)
-                    shift
-                    JOBS=$(nproc)
-                    JOBS=$1
-                    REMAINING_ARGS+="-j $JOBS "
-                    shift
-                    ;;
-                --)
-                    shift;
-                    break
-                    ;;
-                *)
-                    echo "Invalid argument: $1"
-                    show_help
-                    exit 1;
-            esac
-        fi
+        case "$1" in
+            -h | --help)
+                show_help
+                exit 0
+                ;;
+            -a | --addrepo)
+                UNWANTED=$(echo {k,s,u,U,b,B,K,N,m,D,a,i,-,--,kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo})
+                ADD_REPO_ARGS=$($* | sed $UNWANTED)
+                echo $ADD_REPO_ARGS
+                break
+                ;;
+            -u)
+                UPDATE_ARGS=true
+                shift
+                ;;
+            -U)
+                UPDATE_ARGS=true
+                BUILD_REST=true
+                shift
+                ;;
+            -b)
+                UPDATE_BORKED=true
+                shift
+                ;;
+            -B)
+                UPDATE_BORKED=true
+                BUILD_REST=true
+                shift
+                ;;
+            -s | --sync)
+                SYNC=true
+                shift
+                ;;
+            -k | --kernel)
+                BUILD_REST=true
+                shift
+                ;;
+            -K | --custom-kernel-building)
+                if [ -f "/usr/share/updater/ckb.sh" ]; then
+                    REMAINING_ARGS+="-K "
+                else
+                    echo "Error: /usr/share/updater/ckb.sh not found!"
+                    exit 1
+                fi
+                shift
+                ;;
+            -N | --no-GRUB)
+                if [ -f "/usr/share/updater/bootloader.sh" ]; then
+                    REMAINING_ARGS+="-N "
+                else
+                    echo "Error: /usr/share/updater/bootloader.sh not found!"
+                    exit 1
+                fi
+                shift
+                ;;
+            -m | --menuconfig)
+                REMAINING_ARGS+="-m "
+                shift
+                ;;
+            -D | --defconfig)
+                REMAINING_ARGS+="-D "
+                shift
+                ;;
+            -i | --no-initramfs)
+                REMAINING_ARGS+="-i "
+                shift
+                ;;
+            -j | --jobs)
+                shift
+                JOBS=$(nproc)
+                JOBS=$1
+                REMAINING_ARGS+="-j $JOBS "
+                shift
+                ;;
+            --)
+                shift;
+                break
+                ;;
+            *)
+                echo "Invalid argument: $1"
+                show_help
+                exit 1
+                ;;
+        esac
     done
 fi
 
 pushd /usr/share/updater
+
+if [ ! -z "$ADD_REPO_ARGS" ]; then
+    /usr/share/updater/addrepo $ADD_REPO_ARGS
+    exit 0
+fi
 
 if [ "$SYNC" = true ]; then
     echo "Syncing..."
@@ -141,12 +148,9 @@ if [ "$UPDATE_ARGS" = true ]; then
     /usr/share/updater/update
 fi
 
-if [ ! -z "$REMAINING_ARGS" ]; then
-    BUILD_REST=true
-fi
-
-if [ "$BUILD_REST" = true ]; then
+if [ "$BUILD_REST" = true || ! -z "$REMAINING_ARGS" ]; then
     echo "Calling /usr/share/updater/build_rest..."
     /usr/share/updater/build_rest $REMAINING_ARGS
 fi
+
 popd
