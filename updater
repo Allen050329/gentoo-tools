@@ -1,11 +1,12 @@
 #!/bin/bash
 set -e
 
-VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,a,h,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo,help,jobs: -- "$@")
+VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,a:,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,add-repo:,jobs: -- "$@")
 UPDATE_ARGS=false
 UPDATE_BORKED=false
 SYNC=false
 BUILD_REST=false
+ADD_REPO_ARGS=""
 
 show_help() {
     echo "Usage:"
@@ -25,10 +26,10 @@ show_help() {
     echo "-D,--defconfig			call make defconfig instead of make olddefconfig"
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
     echo ""
-    echo "-a,--addrepo [options] <repo-name> <repo-url>:"
-    echo "-S,--sync-type (sync type)	how to sync, defaults to git"
-    echo "<repo-name>			name of repo locally"
-    echo "<repo-url>			link to repo"
+    echo "-a,--add-repo name=<repo-name> url=<repo-url> [Sync=<sync type>] :"
+    echo "name=<repo-name>			name of repo locally"
+    echo "url=<repo-url>			link to repo"
+    echo "Sync=<sync-type>			how to sync, defaults to git"
 }
 
 if [[ $? -ne 0 ]]; then
@@ -41,12 +42,6 @@ else
             -h | --help)
                 show_help
                 exit 0
-                ;;
-            -a | --addrepo)
-                UNWANTED=$(echo {k,s,u,U,b,B,K,N,m,D,a,i,-,--,kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,addrepo})
-                ADD_REPO_ARGS=$($* | sed $UNWANTED)
-                echo $ADD_REPO_ARGS
-                break
                 ;;
             -u)
                 UPDATE_ARGS=true
@@ -104,6 +99,16 @@ else
                 REMAINING_ARGS+="-i "
                 shift
                 ;;
+            -a | --add-repo)
+                ADD_REPO_ARGS=(echo $*)
+                UNWANTED=$(echo "-"{'k','s','u','U','b','B','K','N','m','D','a','i','j'})
+                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
+                UNWANTED=$(echo " | tr -d --"{'','kernel','sync','no-initramfs','menuconfig','defconfig','no-GRUB','custom-kernel-building','add-repo','jobs'})
+                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
+                UNWANTED=$(echo " | tr -d "{'name=','url=','Sync='})
+                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
+                break
+                ;;
             -j | --jobs)
                 shift
                 JOBS=$(nproc)
@@ -140,11 +145,8 @@ if [ "$SYNC" = true ]; then
 fi
 
 if [ "$UPDATE_BORKED" = true ]; then
-    UPDATE_ARGS=false
     /usr/share/updater/update_whilst_borked
-fi
-
-if [ "$UPDATE_ARGS" = true ]; then
+elif [ "$UPDATE_ARGS" = true ]; then
     /usr/share/updater/update
 fi
 

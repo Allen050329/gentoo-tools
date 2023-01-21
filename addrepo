@@ -2,35 +2,11 @@
 set -e
 
 SYNC_TYPE="git"
-URL=""
-NAME=""
-VALID_ARGS=$(getopt -o h,S: --long help,sync-type "$@")
-
-eval set -- "$VALID_ARGS"
-while [ : ]; do
-    case "$1" in
-    -S | --sync-type)
-        shift
-        SYNC_TYPE=$1
-        shift
-        ;;
-    -j | --jobs)
-        shift
-        shift
-        ;;
-    --)
-        shift;
-        break
-        ;;
-    *)
-        echo "Invalid argument: $1"
-        exit 1
-        ;;
-    esac
-done
-
 NAME=$1
 URL=$2
+if [ ! -z $3 ]:
+    SYNC_TYPE=$3
+fi
 
-eselect repository add NAME SYNC_TYPE URL
+eselect repository add $NAME $SYNC_TYPE $URL
 emaint sync -r NAME
