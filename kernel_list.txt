@@ -1,2 +1,0 @@
-Available kernel symlink targets:
-  [1]   linux-6.1.4-gentoo
