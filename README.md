@@ -1,2 +1,2 @@
-# gentoo-tools
-my Gentoo tools
+# update for Gentoo
+my Gentoo updating script
