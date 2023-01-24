@@ -4,7 +4,7 @@ my Gentoo updating script
 # Usage
 ```
 update [options]
-    -h,--help				show this help message and exit
+    -h,--help			show this help message and exit
     -u				update @world
     -U				update @world and the kernel
     -b				update @world with --emptytree
