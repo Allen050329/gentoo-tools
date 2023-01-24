@@ -27,14 +27,14 @@ show_help() {
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
     echo ""
     echo "-a,--add-repo name=<repo-name> url=<repo-url> [Sync=<sync type>] :"
-    echo "name=<repo-name>			name of repo locally"
-    echo "url=<repo-url>			link to repo"
-    echo "Sync=<sync-type>			how to sync, defaults to git"
+    echo "	name=<repo-name>			name of repo locally"
+    echo "	url=<repo-url>			link to repo"
+    echo "	Sync=<sync-type>			how to sync, defaults to git"
 }
 
-if [[ $? -ne 0 ]]; then
+if [ -z $* ]; then
     show_help
-	exit 1;
+	exit 1
 else
     eval set -- "$VALID_ARGS"
     while [ : ]; do
@@ -153,7 +153,7 @@ elif [ "$UPDATE_ARGS" = true ]; then
     /usr/share/updater/update
 fi
 
-if [ "$BUILD_REST" = true || ! -z "$REMAINING_ARGS" ]; then
+if [ "$BUILD_REST" = true ] || [ ! -z "$REMAINING_ARGS" ]; then
     echo "Calling /usr/share/updater/build_rest..."
     /usr/share/updater/build_rest $REMAINING_ARGS
 fi
