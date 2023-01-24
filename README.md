@@ -12,10 +12,10 @@ update [options]
     -j,--jobs			override kernel build job count (Default is in make.conf)
     -s,--sync			sync portage before updating
     -k,--kernel			rebuild the current kernel
-    -N,--no-GRUB			call bootloader.sh instead of grub-mkconfig
-    -m,--menuconfig			call make menuconfig before building the kernel
+    -N,--no-GRUB		call bootloader.sh instead of grub-mkconfig
+    -m,--menuconfig		call make menuconfig before building the kernel
     -i,--no-initramfs		do not call dracut after building the kernel
-    -D,--defconfig			call make defconfig instead of make olddefconfig
+    -D,--defconfig		call make defconfig instead of make olddefconfig
     -K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest
 
     -a,--add-repo name=<repo-name> url=<repo-url> [Sync=<sync type>] :

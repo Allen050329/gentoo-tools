@@ -27,9 +27,9 @@ show_help() {
     echo "-K,--custom-kernel-building	call ckb.sh instead of building the kernel via build_rest"
     echo ""
     echo "-a,--add-repo name=<repo-name> url=<repo-url> [Sync=<sync type>] :"
-    echo "	name=<repo-name>			name of repo locally"
+    echo "	name=<repo-name>		name of repo locally"
     echo "	url=<repo-url>			link to repo"
-    echo "	Sync=<sync-type>			how to sync, defaults to git"
+    echo "	Sync=<sync-type>		how to sync, defaults to git"
 }
 
 if [ -z $* ]; then
