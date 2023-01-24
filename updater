@@ -30,6 +30,8 @@ show_help() {
     echo "	name=<repo-name>		name of repo locally"
     echo "	url=<repo-url>			link to repo"
     echo "	Sync=<sync-type>		how to sync, defaults to git"
+    echo ""
+    echo "For bugs, please report to https://github.com/Allen050329/update-for-gentoo ."
 }
 
 if [ -z $* ]; then
@@ -137,7 +139,6 @@ if [ ! -z "$ADD_REPO_ARGS" ]; then
     /usr/share/updater/addrepo $ADD_REPO_ARGS
     exit 0
 fi
-
 
 if [ "$SYNC" = true ]; then
     echo "Syncing..."
