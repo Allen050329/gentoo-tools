@@ -153,7 +153,7 @@ elif [ "$UPDATE_ARGS" = true ]; then
     /usr/share/updater/update
 fi
 
-if [ "$BUILD_REST" = true ] || [ ! -z "$REMAINING_ARGS" ]; then
+if [[ ! -z "$REMAINING_ARGS" || "$BUILD_REST" = true ]]; then
     echo "Calling /usr/share/updater/build_rest..."
     /usr/share/updater/build_rest $REMAINING_ARGS
 fi
