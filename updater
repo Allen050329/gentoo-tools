@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,a:,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,add-repo:,jobs: -- "$@")
+VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,a,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,add-repo,jobs: -- "$@")
 UPDATE_ARGS=false
 UPDATE_BORKED=false
 SYNC=false
@@ -12,12 +12,12 @@ show_help() {
     echo "Usage:"
     echo ""
     echo "update [options]"
-    echo "-h,--help				show this help message"
+    echo "-h,--help				show this help message and exit"
     echo "-u				update @world"
     echo "-U				update @world and the kernel"
     echo "-b				update @world with --emptytree"
     echo "-B				update @world with --emptytree and update the kernel"
-    echo "-j,--jobs			override kernel build job count (Default is $(nproc))"
+    echo "-j,--jobs			override kernel build job count (Default is in make.conf)"
     echo "-s,--sync			sync portage before updating"
     echo "-k,--kernel			rebuild the current kernel"
     echo "-N,--no-GRUB			call bootloader.sh instead of grub-mkconfig"
@@ -100,13 +100,14 @@ else
                 shift
                 ;;
             -a | --add-repo)
-                ADD_REPO_ARGS=(echo $*)
-                UNWANTED=$(echo "-"{'k','s','u','U','b','B','K','N','m','D','a','i','j'})
-                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
-                UNWANTED=$(echo " | tr -d --"{'','kernel','sync','no-initramfs','menuconfig','defconfig','no-GRUB','custom-kernel-building','add-repo','jobs'})
-                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
-                UNWANTED=$(echo " | tr -d "{'name=','url=','Sync='})
-                ADD_REPO_ARGS=('%s\n' "${ADD_REPO_ARGS//$UNWANTED/}")
+                ara=$(echo "$*" | tr " " "\n")
+                ADD_REPO_ARGS=$(echo "$ara" | grep name=)
+                ADD_REPO_ARGS+=" "
+                ADD_REPO_ARGS+=$(echo "$ara" | grep url=)
+                if [ ! -z $(echo "$ara" | grep Sync=) ]; then
+                    ADD_REPO_ARGS+=" "
+                    ADD_REPO_ARGS+=$(echo "$ara" | grep Sync=)
+                fi
                 break
                 ;;
             -j | --jobs)
@@ -129,12 +130,14 @@ else
     done
 fi
 
+
 pushd /usr/share/updater
 
 if [ ! -z "$ADD_REPO_ARGS" ]; then
     /usr/share/updater/addrepo $ADD_REPO_ARGS
     exit 0
 fi
+
 
 if [ "$SYNC" = true ]; then
     echo "Syncing..."

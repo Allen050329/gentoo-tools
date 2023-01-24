@@ -2,10 +2,10 @@
 set -e
 
 SYNC_TYPE="git"
-NAME=$1
-URL=$2
-if [ ! -z $3 ]:
-    SYNC_TYPE=$3
+NAME=$(echo $1 | cut -d'=' -f 2)
+URL=$(echo $2 | cut -d'=' -f 2)
+if [ ! -z $3 ]; then
+    SYNC_TYPE=$(echo $3 | cut -d'=' -f 2)
 fi
 
 eselect repository add $NAME $SYNC_TYPE $URL
