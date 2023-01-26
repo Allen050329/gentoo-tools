@@ -107,9 +107,9 @@ if [ "$INITRAMFS" = true ]; then
     dracut -Hf --regenerate-all
 fi
 
-if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = false ]; then
-    grub-mkconfig -o /boot/grub/grub.cfg
-else
+if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = true ]; then
     ./bootloader.sh
+else
+    grub-mkconfig -o /boot/grub/grub.cfg
 fi
 popd
