@@ -1,6 +1,6 @@
 #!/bin/bash
 rm -rf /etc/portage/repos.conf/*~
-set -e
+set -o errexit
 emerge --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-write --autounmask-backtrack=y --fail-clean=n @world
 emerge --depclean
 eclean-dist --deep

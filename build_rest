@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -o errexit
 
 DEFCONFIG=false
 INITRAMFS=true
@@ -13,7 +13,7 @@ eval set -- "$VALID_ARGS"
 while [ : ]; do
   case "$1" in
     -K)
-        if [ -f "./ckb.sh" ]; then
+        if [ -f "/usr/share/updater/ckb.sh" ]; then
             USE_CUSTOM_KERNEL_SCRIPT=true
         else
             echo "Error: /usr/share/updater/ckb.sh not found!"
@@ -22,7 +22,7 @@ while [ : ]; do
         shift
         ;;
     -N)
-        if [ -f "./bootloader.sh" ]; then
+        if [ -f "/usr/share/updater/bootloader.sh" ]; then
             USE_CUSTOM_BOOTLOADER_SCRIPT=true
         else
             echo "Error: /usr/share/updater/bootloader.sh not found!"
@@ -43,15 +43,14 @@ while [ : ]; do
         shift
         ;;
     -j)
-        shift
-        JOBS=$1
+        JOBS=$2
         shift
         ;;
     --)
         shift;
         break
         ;;
-    *)
+    -* | --*)
 	    echo "Unexpected option: $1"
 	    exit 1
 	;;
@@ -59,7 +58,7 @@ while [ : ]; do
 done
 
 while :; do
-    eselect kernel list | tee "./kernel_list.txt"
+    eselect kernel list | tee "/usr/share/updater/kernel_list.txt"
     check='^[+-]?[0-9]+([.][0-9]+)?$'
     read -p "Input kernel selection:" kernelchoice
     if [[ $kernelchoice =~ $check ]]; then
@@ -105,11 +104,17 @@ fi
 
 if [ "$INITRAMFS" = true ]; then
     dracut -Hf --regenerate-all
+    if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = true ]; then
+    ./bootloader.sh
+    else
+        grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+else
+    if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = true ]; then
+        ./bootloader.sh
+    else
+        grub-mkconfig -o /boot/grub/grub.cfg
+    fi
 fi
 
-if [ "$USE_CUSTOM_BOOTLOADER_SCRIPT" = true ]; then
-    ./bootloader.sh
-else
-    grub-mkconfig -o /boot/grub/grub.cfg
-fi
 popd

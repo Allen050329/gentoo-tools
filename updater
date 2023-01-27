@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -o errexit
 
 VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,a,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,add-repo,jobs: -- "$@")
 UPDATE_ARGS=false
@@ -17,7 +17,7 @@ show_help() {
     echo "-U				update @world and the kernel"
     echo "-b				update @world with --emptytree"
     echo "-B				update @world with --emptytree and update the kernel"
-    echo "-j,--jobs			override kernel build job count (Default is in make.conf)"
+    echo "-j,--jobs			override kernel build job count (Default is $(nproc))"
     echo "-s,--sync			sync portage before updating"
     echo "-k,--kernel			rebuild the current kernel"
     echo "-N,--no-GRUB			call bootloader.sh instead of grub-mkconfig"
@@ -34,12 +34,14 @@ show_help() {
     echo "For bugs, please report to https://github.com/Allen050329/update-for-gentoo ."
 }
 
-if [ -z $* ]; then
+eval set -- "$VALID_ARGS"
+
+if [ -z "$*" ]; then
     show_help
 	exit 1
 else
-    eval set -- "$VALID_ARGS"
-    while [ : ]; do
+    while :
+    do
         case "$1" in
             -h | --help)
                 show_help
@@ -113,11 +115,9 @@ else
                 break
                 ;;
             -j | --jobs)
-                shift
-                JOBS=$(nproc)
-                JOBS=$1
+                JOBS=$2
                 REMAINING_ARGS+="-j $JOBS "
-                shift
+                shift 2
                 ;;
             --)
                 shift;

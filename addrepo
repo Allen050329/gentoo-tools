@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -o errexit
 
 SYNC_TYPE="git"
 NAME=$(echo $1 | cut -d'=' -f 2)
