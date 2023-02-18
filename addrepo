@@ -9,4 +9,4 @@ if [ ! -z $3 ]; then
 fi
 
 eselect repository add $NAME $SYNC_TYPE $URL
-emaint sync -r NAME
+emaint sync -r $NAME
