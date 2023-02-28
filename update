@@ -1,8 +1,8 @@
 #!/bin/bash
 rm -rf /etc/portage/repos.conf/*~
 set -o errexit
-emerge --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-write --autounmask-backtrack=y --fail-clean=n @world
-emerge --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-write --autounmask-backtrack=y --fail-clean=n @live-rebuild
+emerge --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-backtrack=y --fail-clean=n @world
+emerge --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-backtrack=y --fail-clean=n @live-rebuild
 emerge --depclean
 eclean-dist --deep
 eclean-pkg --deep
