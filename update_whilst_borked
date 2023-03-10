@@ -3,7 +3,6 @@ rm -rf /etc/portage/repos.conf/*~
 set -o errexit
 emerge -e --changed-use --with-bdeps=y --update --newuse --deep --autounmask-backtrack=y --fail-clean=y @world
 emerge -e --update --newuse --changed-use --deep --with-bdeps=y --backtrack=3000 --autounmask-backtrack=y --fail-clean=n @smart-live-rebuild
-emerge --depclean
 eclean-dist --deep
 eclean-pkg --deep
 eix-update

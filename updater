@@ -1,10 +1,11 @@
 #!/bin/bash
 set -o errexit
 
-VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,a,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,no-GRUB,custom-kernel-building,help,add-repo,jobs: -- "$@")
+VALID_ARGS=$(getopt -o k,s,u,U,b,B,K,N,m,D,i,h,d,a,j: --long kernel,sync,no-initramfs,menuconfig,defconfig,depclean,no-GRUB,custom-kernel-building,help,add-repo,jobs: -- "$@")
 UPDATE_ARGS=false
 UPDATE_BORKED=false
 SYNC=false
+DEPCLEAN=false
 BUILD_REST=false
 ADD_REPO_ARGS=""
 
@@ -18,6 +19,7 @@ show_help() {
     echo "-b				update @world with --emptytree"
     echo "-B				update @world with --emptytree and update the kernel"
     echo "-j,--jobs			override kernel build job count (Default is $(nproc))"
+    echo "-d,--depclean     runs emerge --depclean"
     echo "-s,--sync			sync portage before updating"
     echo "-k,--kernel			rebuild the current kernel"
     echo "-N,--no-GRUB			call bootloader.sh instead of grub-mkconfig"
@@ -71,6 +73,10 @@ else
                 ;;
             -k | --kernel)
                 BUILD_REST=true
+                shift
+                ;;
+            -d | --depclean)
+                DEPCLEAN=true
                 shift
                 ;;
             -K | --custom-kernel-building)
@@ -152,6 +158,10 @@ if [ "$UPDATE_BORKED" = true ]; then
     /usr/share/updater/update_whilst_borked
 elif [ "$UPDATE_ARGS" = true ]; then
     /usr/share/updater/update
+fi
+
+if [ "$DEPCLEAN" = true ]; then
+    emerge --depclean
 fi
 
 if [[ ! -z "$REMAINING_ARGS" || "$BUILD_REST" = true ]]; then
