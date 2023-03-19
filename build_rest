@@ -99,7 +99,6 @@ else
     make -j$JOBS install
     popd
     emerge @module-rebuild
-    emerge --depclean
 fi
 
 if [ "$INITRAMFS" = true ]; then
