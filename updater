@@ -19,7 +19,7 @@ show_help() {
     echo "-b				update @world with --emptytree"
     echo "-B				update @world with --emptytree and update the kernel"
     echo "-j,--jobs			override kernel build job count (Default is $(nproc))"
-    echo "-d,--depclean     runs emerge --depclean"
+    echo "-d,--depclean			runs emerge --depclean"
     echo "-s,--sync			sync portage before updating"
     echo "-k,--kernel			rebuild the current kernel"
     echo "-N,--no-GRUB			call bootloader.sh instead of grub-mkconfig"
