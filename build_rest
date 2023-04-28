@@ -44,7 +44,7 @@ while [ : ]; do
         ;;
     -j)
         JOBS=$2
-        shift
+        shift 2
         ;;
     --)
         shift;
@@ -57,10 +57,34 @@ while [ : ]; do
     esac
 done
 
+is_int() {
+    test "$@" -eq "$@" 2> /dev/null;
+}
+
+rectify_job_count() {
+    while :; do
+        echo "Invalid job count!!! Should be int"
+        read -p "Input job count: " JOBS
+        if is_int $JOBS; then
+            if [[ $JOBS > 0 && $JOBS < $(nproc)+1 ]]; then
+                break
+            fi
+        fi
+    done
+}
+
+if is_int $JOBS; then
+    if [[ $JOBS < 1 || $JOBS > $(nproc) ]]; then
+        rectify_job_count
+    fi
+else
+    rectify_job_count
+fi
+
 while :; do
     eselect kernel list | tee "/usr/share/updater/kernel_list.txt"
     check='^[+-]?[0-9]+([.][0-9]+)?$'
-    read -p "Input kernel selection:" kernelchoice
+    read -p "Input kernel selection: " kernelchoice
     if [[ $kernelchoice =~ $check ]]; then
         if [[ $kernelchoice < $((10#`cat ./kernel_list.txt | wc -l`)) && $kernelchoice > 0 ]]; then
             break
